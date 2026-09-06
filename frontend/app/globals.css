@@ -2,117 +2,60 @@
 
 @layer base {
   :root {
-    --background: #09090b;
-    --foreground: #fafafa;
-    --card: rgba(18, 18, 23, 0.7);
+    --background: #000000;
+    --foreground: #f4f5f8;
+    --card: rgba(14, 17, 24, 0.75);
     --card-border: rgba(255, 255, 255, 0.08);
-    --accent: #00f0ff;
-    --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-    --font-mono: "JetBrains Mono", "Fira Code", monospace;
-  }
-
-  /* ── Force Inter everywhere ── */
-  html,
-  body,
-  * {
-    font-family: var(--font-sans);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  /* Mono only where explicitly asked */
-  code, kbd, pre, samp,
-  .font-mono {
-    font-family: var(--font-mono) !important;
+    --card-hover: rgba(255, 255, 255, 0.14);
+    --accent-cyan: #06b6d4;
+    --status-emerald: #10b981;
+    --status-amber: #f59e0b;
+    --status-rose: #ef4444;
   }
 
   body {
     background-color: var(--background);
     color: var(--foreground);
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     overflow-x: hidden;
-    letter-spacing: -0.011em;
-  }
-
-  /* Remove default blue outline, use subtle ring instead */
-  :focus-visible {
-    outline: 2px solid rgba(255, 255, 255, 0.2);
-    outline-offset: 2px;
   }
 }
 
-/* ── Headings: tighter tracking, Inter weight ramp ── */
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-sans);
-  letter-spacing: -0.03em;
-  font-weight: 600;
+/* Custom Minimalist Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-/* ── Scrollbar ── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
-
-/* ── Glassmorphic card ── */
-.eleven-card {
-  background: rgba(15, 15, 20, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 1.25rem;
-  box-shadow: 0 20px 40px -15px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
-  transition: border-color 0.25s ease;
-}
-.eleven-card:hover { border-color: rgba(255,255,255,0.14); }
-
-/* ── Buttons ── */
-.eleven-btn-primary {
-  font-family: var(--font-sans);
-  background: #ffffff;
-  color: #09090b;
-  font-weight: 500;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 0 20px rgba(255,255,255,0.15);
-  transition: all 0.2s ease;
-}
-.eleven-btn-primary:hover {
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 0 30px rgba(255,255,255,0.3);
-  transform: translateY(-1px);
-}
-.eleven-btn-secondary {
-  font-family: var(--font-sans);
-  background: rgba(255,255,255,0.05);
-  color: #fafafa;
-  border: 1px solid rgba(255,255,255,0.1);
-  backdrop-filter: blur(10px);
-  transition: all 0.2s ease;
-}
-.eleven-btn-secondary:hover {
-  background: rgba(255,255,255,0.09);
-  border-color: rgba(255,255,255,0.18);
+::-webkit-scrollbar-track {
+  background: #000000;
 }
 
-/* ── Ambient glow orbs ── */
-.glow-orb-cyan {
-  position: absolute;
-  width: 500px; height: 500px;
-  background: radial-gradient(circle, rgba(0,240,255,0.07) 0%, transparent 70%);
-  filter: blur(60px);
-  pointer-events: none;
-}
-.glow-orb-purple {
-  position: absolute;
-  width: 600px; height: 600px;
-  background: radial-gradient(circle, rgba(168,85,247,0.05) 0%, transparent 70%);
-  filter: blur(80px);
-  pointer-events: none;
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 9999px;
 }
 
-/* ── Dot grid background ── */
-.bg-grid-dots {
-  background-image: radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px);
-  background-size: 24px 24px;
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 182, 212, 0.4);
 }
 
-/* ── Range input ── */
-input[type="range"] { accent-color: #ffffff; }
+/* Minimalist Energy Card Style */
+.energy-card {
+  background: rgba(14, 17, 24, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.875rem;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.energy-card:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+/* Custom Range Input */
+input[type="range"] {
+  accent-color: #06b6d4;
+}

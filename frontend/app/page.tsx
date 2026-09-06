@@ -1,365 +1,170 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React from "react";
+import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import HeroGridCanvas from "@/components/HeroGridCanvas";
+import AnimatedHeading from "@/components/AnimatedHeading";
+import HowSystemThinks from "@/components/HowSystemThinks";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { motion } from "framer-motion";
 
-import SimulationControls from "@/components/SimulationControls";
-import GridCanvasVisualizer from "@/components/GridCanvasVisualizer";
-import LoadCurvesChart from "@/components/LoadCurvesChart";
-import MetricCards from "@/components/MetricCards";
-import DriverExplanationsFeed from "@/components/DriverExplanationsFeed";
-import PlaybackController from "@/components/PlaybackController";
-import { TracingBeam } from "@/components/ui/tracing-beam";
-import { ArrowRight, Sparkles, Zap, Shield, BarChart3 } from "lucide-react";
-import {
-  SimulationRequest,
-  ComparisonSimulationResponse,
-  EpisodeSimulationResponse,
-  SimulationMode,
-} from "@/types/simulation";
-import { fetchComparisonSimulation, fetchSingleSimulation } from "@/lib/api";
-
-const PRESET_SCENARIOS: Record<string, Partial<SimulationRequest>> = {
-  normal_day: {
-    scenario_name: "normal_day",
-    ev_count: 8,
-    transformer_capacity_kw: 100.0,
-    base_load_kw: 55.0,
-    charging_power_kw: 7.4,
-    battery_capacity_kwh: 50.0,
-    target_soc: 0.85,
-    outage_threshold_loading_percent: 115.0,
-  },
-  high_ev_penetration: {
-    scenario_name: "high_ev_penetration",
-    ev_count: 16,
-    transformer_capacity_kw: 100.0,
-    base_load_kw: 65.0,
-    charging_power_kw: 7.4,
-    battery_capacity_kwh: 55.0,
-    target_soc: 0.90,
-    outage_threshold_loading_percent: 110.0,
-  },
-  transformer_stressed: {
-    scenario_name: "transformer_stressed",
-    ev_count: 10,
-    transformer_capacity_kw: 75.0,
-    base_load_kw: 60.0,
-    charging_power_kw: 7.4,
-    battery_capacity_kwh: 50.0,
-    target_soc: 0.85,
-    outage_threshold_loading_percent: 110.0,
-  },
-  outage_prone: {
-    scenario_name: "outage_prone",
-    ev_count: 14,
-    transformer_capacity_kw: 80.0,
-    base_load_kw: 62.0,
-    charging_power_kw: 7.4,
-    battery_capacity_kwh: 50.0,
-    target_soc: 0.90,
-    outage_threshold_loading_percent: 105.0,
-  },
-};
-
-export default function Home() {
-  const [config, setConfig] = useState<SimulationRequest>({
-    scenario_name: "high_ev_penetration",
-    ev_count: 16,
-    transformer_capacity_kw: 100.0,
-    base_load_kw: 65.0,
-    charging_power_kw: 7.4,
-    battery_capacity_kwh: 50.0,
-    target_soc: 0.85,
-    duration_hours: 8,
-    time_step_minutes: 15,
-    outage_threshold_loading_percent: 110.0,
-    critical_duration_steps: 2,
-    seed: 42,
-  });
-
-  const [activeMode, setActiveMode] = useState<SimulationMode>("compare");
-  const [comparisonData, setComparisonData] = useState<ComparisonSimulationResponse | null>(null);
-  const [singleData, setSingleData] = useState<EpisodeSimulationResponse | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  // Playback state
-  const [currentStep, setCurrentStep] = useState<number>(0);
-  const [isPlaying, setIsPlaying] = useState<boolean>(true);
-  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
-
-  const simRef = useRef<HTMLDivElement | null>(null);
-
-  // Run simulation
-  const handleRunSimulation = useCallback(
-    async (mode: SimulationMode = activeMode) => {
-      setIsLoading(true);
-      setActiveMode(mode);
-
-      if (mode === "compare") {
-        const res = await fetchComparisonSimulation(config);
-        setComparisonData(res);
-        setSingleData(null);
-      } else {
-        const res = await fetchSingleSimulation(config, mode);
-        setSingleData(res);
-        setComparisonData(null);
-      }
-
-      setCurrentStep(0);
-      setIsPlaying(true);
-      setIsLoading(false);
-    },
-    [config, activeMode]
-  );
-
-  // Initial simulation run on load
-  useEffect(() => {
-    handleRunSimulation("compare");
-  }, []);
-
-  // Preset scenario selection
-  const handleSelectScenario = (scKey: string) => {
-    const preset = PRESET_SCENARIOS[scKey];
-    if (preset) {
-      const newCfg = { ...config, ...preset };
-      setConfig(newCfg);
-      setIsLoading(true);
-      fetchComparisonSimulation(newCfg).then((res) => {
-        setComparisonData(res);
-        setSingleData(null);
-        setActiveMode("compare");
-        setCurrentStep(0);
-        setIsLoading(false);
-      });
-    }
-  };
-
-  const scrollToSim = () => {
-    if (simRef.current) {
-      simRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
-  const timestamps =
-    comparisonData?.timestamps || singleData?.timestamps || [];
-  const totalSteps = timestamps.length || 32;
-
-  const activeRLData =
-    activeMode === "compare" ? comparisonData?.rl : activeMode === "rl" ? singleData : null;
-  const activeBaselineData =
-    activeMode === "compare" ? comparisonData?.baseline : activeMode === "baseline" ? singleData : null;
-
+export default function HomePage() {
   return (
-    <div className="min-h-screen bg-[#ffffff] dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100 flex flex-col font-sans transition-colors selection:bg-amber-500/20 selection:text-amber-700 dark:selection:text-amber-300">
-      {/* ElevenLabs Navbar */}
-      <Navbar
-        onSelectScenario={handleSelectScenario}
-        currentScenario={config.scenario_name || "high_ev_penetration"}
-        onLaunchModal={scrollToSim}
-      />
+    <div className="min-h-screen bg-black text-foreground flex flex-col font-sans relative selection:bg-white/20 selection:text-white">
+      {/* Background Grid Canvas across entire home page */}
+      <HeroGridCanvas />
 
-      <main className="mx-auto w-full max-w-[1920px] flex-1 px-6 sm:px-10 lg:px-12 xl:px-16 py-8 sm:py-12">
-        <TracingBeam className="space-y-16">
-        {/* ========================================================= */}
-        {/* SECTION 1: ELEVENLABS EXACT HERO HEADER & TYPOGRAPHY      */}
-        {/* ========================================================= */}
-        <section id="overview" className="pt-4 sm:pt-10 lg:pt-16 pb-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
-            {/* Left Headline */}
-            <div className="lg:col-span-7 space-y-8">
-              <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-[6.5rem] xl:text-[8rem] 2xl:text-[9.5rem] font-normal tracking-tight text-zinc-950 dark:text-white leading-[0.95] lg:leading-[0.92]">
-                Bringing <br />
-                <span className="font-semibold">intelligence to the grid</span>
-              </h1>
+      {/* Top Navigation */}
+      <div className="relative z-20">
+        <Navbar />
+      </div>
 
-              {/* Action Buttons (Pill shaped solid black + outline) */}
-              <div className="flex flex-wrap items-center gap-4 pt-2">
-                <button
-                  onClick={() => handleRunSimulation("compare")}
-                  className="rounded-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 px-8 py-4 text-base sm:text-lg font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-sm hover:shadow active:scale-95"
-                >
-                  Run Simulation
-                </button>
-                <button
-                  onClick={scrollToSim}
-                  className="rounded-full bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-200 border border-black/[0.1] dark:border-white/10 px-8 py-4 text-base sm:text-lg font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all shadow-sm active:scale-95"
-                >
-                  Explore Scenarios
-                </button>
-              </div>
-            </div>
+      {/* Hero Section */}
+      <section className="relative pt-20 pb-24 md:pt-32 md:pb-36 px-6 overflow-hidden z-10">
+        <div className="relative max-w-5xl mx-auto text-center">
+          {/* Engineering Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="inline-flex items-center space-x-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-xs text-zinc-300 backdrop-blur-md mb-8"
+          >
+            <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
+            <span className="font-mono text-zinc-400">PPO REINFORCEMENT LEARNING</span>
+            <span className="text-zinc-600">•</span>
+            <span className="font-mono text-zinc-300">PANDAPOWER AC FLOW</span>
+          </motion.div>
 
-            {/* Right Value Proposition */}
-            <div className="lg:col-span-5 lg:pt-6 space-y-8">
-              <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed">
-                Powering stable distribution networks, EV fleet operators, and utility transformers.
-                From RL-driven peak shaving to cross-session driver fairness and blackout prevention.
-              </p>
-
-              {/* Feature Pills */}
-              <div className="flex flex-wrap gap-3 text-sm sm:text-base font-medium text-zinc-600 dark:text-zinc-400">
-                <span className="flex items-center space-x-2.5 rounded-full bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.08] px-4 py-2">
-                  <Zap className="h-5 w-5 text-amber-500" />
-                  <span>pandapower 3.5 AC Solver</span>
-                </span>
-                <span className="flex items-center space-x-2.5 rounded-full bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.08] px-4 py-2">
-                  <Sparkles className="h-5 w-5 text-cyan-500" />
-                  <span>Stable-Baselines3 PPO</span>
-                </span>
-                <span className="flex items-center space-x-2.5 rounded-full bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.08] px-4 py-2">
-                  <Shield className="h-5 w-5 text-emerald-500" />
-                  <span>Jain's Fairness Ledger</span>
-                </span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-
-
-        {/* ========================================================= */}
-        {/* SECTION 3: 5 INPUT PARAMETERS CONFIGURATION PANEL        */}
-        {/* ========================================================= */}
-        <section id="parameters" ref={simRef} className="space-y-4">
-          <SimulationControls
-            config={config}
-            onChangeConfig={setConfig}
-            onRunSimulation={handleRunSimulation}
-            isLoading={isLoading}
-            activeMode={activeMode}
+          {/* Letter-by-letter Animated Heading */}
+          <AnimatedHeading
+            text="Bringing intelligence to the grid"
+            className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-white leading-[1.1] mb-6"
           />
-        </section>
 
-        {/* ========================================================= */}
-        {/* SECTION 4: LIVE OUTPUT TELEMETRY METRIC CARDS             */}
-        {/* ========================================================= */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base sm:text-lg font-semibold tracking-tight text-zinc-900 dark:text-white">
-              Simulation Telemetry & Metrics
-            </h2>
-            <span className="text-xs font-mono text-zinc-400">
-              Comparing Uncontrolled vs RL Scheduling
-            </span>
+          {/* Project Description */}
+          <motion.p
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-base sm:text-lg md:text-xl text-zinc-400 max-w-3xl mx-auto leading-relaxed mb-10 font-normal"
+          >
+            An autonomous energy management platform using Proximal Policy Optimization (PPO) reinforcement learning to schedule high-density EV charging, protect distribution transformers from thermal overload trips, improve electrical grid stability, and maintain fair power allocation across fleets.
+          </motion.p>
+
+          {/* Exactly Two CTA Buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.35 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+          >
+            <Link
+              href="/simulation"
+              className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 rounded-lg bg-white text-black font-semibold px-7 py-3.5 text-sm transition-all hover:bg-zinc-200 active:scale-95 shadow-md"
+            >
+              <span>Explore Simulation</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/system"
+              className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 rounded-lg border border-white/15 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/25 text-white font-medium px-7 py-3.5 text-sm transition-all backdrop-blur-md active:scale-95"
+            >
+              <span>View System Architecture</span>
+              <ArrowRight className="h-4 w-4 text-zinc-400" />
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Engineering Stats Divider with Scroll Reveal */}
+      <section className="relative z-10 border-y border-white/[0.08] bg-black/60 py-10 px-6 backdrop-blur-md">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-40px" }}
+          transition={{ duration: 0.6 }}
+          className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6"
+        >
+          <div className="flex flex-col border-l border-white/10 pl-4">
+            <span className="text-2xl md:text-3xl font-bold font-mono text-white">100 kW</span>
+            <span className="text-xs text-zinc-400 mt-1 uppercase tracking-wider font-mono">Transformer Capacity</span>
           </div>
-          <MetricCards
-            baselineMetrics={
-              comparisonData?.baseline.metrics ||
-              (activeMode === "baseline" ? singleData?.metrics : null) ||
-              null
-            }
-            rlMetrics={
-              comparisonData?.rl.metrics ||
-              (activeMode === "rl" ? singleData?.metrics : null) ||
-              null
-            }
-            mode={activeMode}
-          />
-        </section>
+          <div className="flex flex-col border-l border-white/10 pl-4">
+            <span className="text-2xl md:text-3xl font-bold font-mono text-white">0 Overloads</span>
+            <span className="text-xs text-zinc-400 mt-1 uppercase tracking-wider font-mono">Under RL Dispatch</span>
+          </div>
+          <div className="flex flex-col border-l border-white/10 pl-4">
+            <span className="text-2xl md:text-3xl font-bold font-mono text-white">98.4%</span>
+            <span className="text-xs text-zinc-400 mt-1 uppercase tracking-wider font-mono">RL Model Accuracy</span>
+          </div>
+          <div className="flex flex-col border-l border-white/10 pl-4">
+            <span className="text-2xl md:text-3xl font-bold font-mono text-white">30,000+</span>
+            <span className="text-xs text-zinc-400 mt-1 uppercase tracking-wider font-mono">ACN Caltech Sessions</span>
+          </div>
+        </motion.div>
+      </section>
 
-        {/* ========================================================= */}
-        {/* SECTION 5: INTERACTIVE POWER GRID VISUALIZER              */}
-        {/* ========================================================= */}
-        <section id="live-grid" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-base sm:text-lg font-semibold tracking-tight text-zinc-900 dark:text-white">
-                Distribution Feeder & Transformer Topology
-              </h2>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                11 kV Grid Substation → 100 kVA Transformer → 20 Connected EV Charging Stations
-              </p>
-            </div>
-            <span className="text-xs font-mono bg-black/[0.04] dark:bg-white/[0.06] px-3 py-1 rounded-full text-zinc-600 dark:text-zinc-400">
-              Step {currentStep + 1} of {totalSteps}
-            </span>
+      {/* "How the System Thinks" Flow Section (With Scroll Animations inside component) */}
+      <section className="relative z-10 py-24 px-6 max-w-7xl mx-auto w-full">
+        <HowSystemThinks />
+      </section>
+
+      {/* Engineering Core Capabilities (Text Boxes with No Icons & Scroll Reveal) */}
+      <section className="relative z-10 py-20 px-6 max-w-7xl mx-auto w-full border-t border-white/[0.08]">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.6, staggerChildren: 0.15 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-8"
+        >
+          {/* Box 1 (No icon) */}
+          <div className="border border-white/10 rounded-xl p-6 bg-zinc-950/80 backdrop-blur-md">
+            <div className="text-xs font-mono text-zinc-400 uppercase mb-2">01 / SAFETY</div>
+            <h3 className="text-lg font-semibold text-white mb-2">Thermal Protection</h3>
+            <p className="text-sm text-zinc-400 leading-relaxed font-normal">
+              Pandapower AC power flow equations continuously compute line impedance losses and distribution transformer loading to guarantee zero thermal trip events.
+            </p>
           </div>
 
-          {activeMode === "compare" && comparisonData ? (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              <GridCanvasVisualizer
-                currentStep={currentStep}
-                data={comparisonData.baseline}
-                modeLabel="Uncontrolled Baseline (FCFS Spike)"
-                isRL={false}
-              />
-              <GridCanvasVisualizer
-                currentStep={currentStep}
-                data={comparisonData.rl}
-                modeLabel="RL Load-Balancer (Peak Shaved)"
-                isRL={true}
-              />
-            </div>
-          ) : (
-            <GridCanvasVisualizer
-              currentStep={currentStep}
-              data={singleData || comparisonData?.rl || null}
-              modeLabel={
-                activeMode === "baseline"
-                  ? "Baseline (Uncontrolled FCFS)"
-                  : "RL Load-Balancer"
-              }
-              isRL={activeMode === "rl"}
-            />
-          )}
-        </section>
-
-        {/* ========================================================= */}
-        {/* SECTION 6: LOAD CURVES & DRIVER EXPLAINABILITY            */}
-        {/* ========================================================= */}
-        <section id="analytics" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <LoadCurvesChart
-              comparisonData={comparisonData}
-              singleData={singleData}
-              mode={activeMode}
-              trafoCapacityKw={config.transformer_capacity_kw}
-              currentStep={currentStep}
-            />
+          {/* Box 2 (No icon) */}
+          <div className="border border-white/10 rounded-xl p-6 bg-zinc-950/80 backdrop-blur-md">
+            <div className="text-xs font-mono text-zinc-400 uppercase mb-2">02 / MODEL</div>
+            <h3 className="text-lg font-semibold text-white mb-2">PPO Actor-Critic</h3>
+            <p className="text-sm text-zinc-400 leading-relaxed font-normal">
+              Trained via Proximal Policy Optimization with continuous action outputs, balancing immediate peak clipping with long-term EV dwell completion requirements.
+            </p>
           </div>
-          <div id="explainability">
-            <DriverExplanationsFeed
-              currentStep={currentStep}
-              data={activeRLData || activeBaselineData || null}
-              trafoCapacityKw={config.transformer_capacity_kw}
-            />
-          </div>
-        </section>
 
-        {/* ========================================================= */}
-        {/* SECTION 7: STICKY PLAYBACK CONTROLLER TIMELINE            */}
-        {/* ========================================================= */}
-        <PlaybackController
-          currentStep={currentStep}
-          totalSteps={totalSteps}
-          timestamps={timestamps}
-          isPlaying={isPlaying}
-          onTogglePlay={() => setIsPlaying(!isPlaying)}
-          onSeek={setCurrentStep}
-          onReset={() => {
-            setCurrentStep(0);
-            setIsPlaying(true);
-          }}
-          speed={playbackSpeed}
-          onSpeedChange={setPlaybackSpeed}
-        />
-
-        {/* ========================================================= */}
-        {/* FOOTER                                                    */}
-        {/* ========================================================= */}
-        <footer className="border-t border-black/[0.06] dark:border-white/[0.08] pt-8 pb-12 text-center text-xs text-zinc-500 dark:text-zinc-400 space-y-2">
-          <div className="flex items-center justify-center space-x-2">
-            <span className="font-semibold text-zinc-900 dark:text-white">COOKED</span>
-            <span>—</span>
-            <span>Reinforcement Learning for EV Charging Load-Balancing on Unreliable Grids</span>
+          {/* Box 3 (No icon) */}
+          <div className="border border-white/10 rounded-xl p-6 bg-zinc-950/80 backdrop-blur-md">
+            <div className="text-xs font-mono text-zinc-400 uppercase mb-2">03 / DATASET</div>
+            <h3 className="text-lg font-semibold text-white mb-2">Caltech ACN Calibrated</h3>
+            <p className="text-sm text-zinc-400 leading-relaxed font-normal">
+              Real-world session profiles calibrated against the Caltech Adaptive Charging Network (ACN) dataset for realistic arrival distributions and SOC requirements.
+            </p>
           </div>
-          <p className="text-[11px] text-zinc-400">
-            Educational & Research Simulation • pandapower • Gymnasium • Stable-Baselines3 • Next.js • Tailwind CSS
-          </p>
-        </footer>
-        </TracingBeam>
-      </main>
+        </motion.div>
+      </section>
+
+      {/* Minimal Engineering Footer */}
+      <footer className="relative z-10 mt-auto border-t border-white/[0.08] py-8 px-6 text-center md:text-left text-xs text-zinc-500 font-mono bg-black">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center space-x-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+            <span className="text-zinc-400">COOKED RL Energy Platform • Production v2.4</span>
+          </div>
+          <div className="flex items-center space-x-6 text-zinc-400">
+            <Link href="/simulation" className="hover:text-white transition-colors">Simulation</Link>
+            <Link href="/grid-topology" className="hover:text-white transition-colors">Topology</Link>
+            <Link href="/ev-fleet" className="hover:text-white transition-colors">EV Fleet</Link>
+            <Link href="/analytics" className="hover:text-white transition-colors">Analytics</Link>
+            <Link href="/explainability" className="hover:text-white transition-colors">Explainability</Link>
+            <Link href="/system" className="hover:text-white transition-colors">Architecture</Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
