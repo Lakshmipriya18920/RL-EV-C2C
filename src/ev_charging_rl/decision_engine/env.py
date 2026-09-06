@@ -10,6 +10,7 @@ from ..data_layer.grid_state_store import TransformerThermalFailureModel, GridTr
 from ..data_layer.ev_fleet_state import EVState
 from ..data_layer.data_generator import BaseLoadGenerator, EVFleetGenerator
 from .reward import EVChargingRewardEngine, RewardComponents
+from .priority_engine.fairness_ledger import FairnessLedger
 
 
 class EVChargingGridEnv(gym.Env):
@@ -70,6 +71,7 @@ class EVChargingGridEnv(gym.Env):
 
         reward_kwargs = reward_weights or {}
         self.reward_engine = EVChargingRewardEngine(**reward_kwargs)
+        self.fairness_ledger = FairnessLedger()
 
         # Action Space: MultiDiscrete fixed to max_evs
         self.action_space = spaces.MultiDiscrete([3] * self.max_evs)
@@ -189,10 +191,24 @@ class EVChargingGridEnv(gym.Env):
             dt_hours=self.dt_hours,
         )
 
-        # 7. Advance Step
-        self.current_step += 1
-        terminated = (self.current_step >= self.total_steps) or self.failure_model.is_outage_tripped
+        # 7. Check Episode Termination
+        terminated = (self.current_step + 1 >= self.total_steps) or self.failure_model.is_outage_tripped
         truncated = False
+
+        # 8. Record Session Outcomes for Departing EVs into Fairness Ledger
+        for ev in self.fleet:
+            if self.current_step == ev.departure_step - 1 or (terminated and ev.is_connected):
+                shortfall = max(0.0, (ev.target_soc - ev.current_soc) * ev.battery_capacity_kwh)
+                delay_hours = (ev.departure_step - ev.arrival_step) * self.dt_hours if not ev.is_completed else 0.0
+                self.fairness_ledger.record_session_outcome(
+                    driver_id=ev.ev_id,
+                    delay_hours=delay_hours,
+                    shortfall_kwh=shortfall,
+                    guaranteed_min_kwh=ev.battery_capacity_kwh * 0.3,
+                )
+
+        # 9. Advance Step
+        self.current_step += 1
 
         obs = self._get_observation()
         info = self._get_info(reward_comp=reward_comp)
