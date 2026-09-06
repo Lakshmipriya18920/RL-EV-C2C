@@ -9,6 +9,7 @@ import LoadCurvesChart from "@/components/LoadCurvesChart";
 import MetricCards from "@/components/MetricCards";
 import DriverExplanationsFeed from "@/components/DriverExplanationsFeed";
 import PlaybackController from "@/components/PlaybackController";
+import { TracingBeam } from "@/components/ui/tracing-beam";
 import { ArrowRight, Sparkles, Zap, Shield, BarChart3 } from "lucide-react";
 import {
   SimulationRequest,
@@ -158,30 +159,31 @@ export default function Home() {
         onLaunchModal={scrollToSim}
       />
 
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6 py-8 sm:py-12 space-y-16">
+      <main className="mx-auto w-full max-w-[1920px] flex-1 px-6 sm:px-10 lg:px-12 xl:px-16 py-8 sm:py-12">
+        <TracingBeam className="space-y-16">
         {/* ========================================================= */}
         {/* SECTION 1: ELEVENLABS EXACT HERO HEADER & TYPOGRAPHY      */}
         {/* ========================================================= */}
-        <section id="overview" className="pt-4 sm:pt-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+        <section id="overview" className="pt-4 sm:pt-10 lg:pt-16 pb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
             {/* Left Headline */}
-            <div className="lg:col-span-6 space-y-6">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-normal tracking-tight text-zinc-950 dark:text-white leading-[1.1]">
+            <div className="lg:col-span-7 space-y-8">
+              <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-[6.5rem] xl:text-[8rem] 2xl:text-[9.5rem] font-normal tracking-tight text-zinc-950 dark:text-white leading-[0.95] lg:leading-[0.92]">
                 Bringing <br />
                 <span className="font-semibold">intelligence to the grid</span>
               </h1>
 
               {/* Action Buttons (Pill shaped solid black + outline) */}
-              <div className="flex flex-wrap items-center gap-3 pt-2">
+              <div className="flex flex-wrap items-center gap-4 pt-2">
                 <button
                   onClick={() => handleRunSimulation("compare")}
-                  className="rounded-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 px-6 py-3 text-sm font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-sm hover:shadow active:scale-95"
+                  className="rounded-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 px-8 py-4 text-base sm:text-lg font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-sm hover:shadow active:scale-95"
                 >
                   Run Simulation
                 </button>
                 <button
                   onClick={scrollToSim}
-                  className="rounded-full bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-200 border border-black/[0.1] dark:border-white/10 px-6 py-3 text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all shadow-sm active:scale-95"
+                  className="rounded-full bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-200 border border-black/[0.1] dark:border-white/10 px-8 py-4 text-base sm:text-lg font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all shadow-sm active:scale-95"
                 >
                   Explore Scenarios
                 </button>
@@ -189,24 +191,24 @@ export default function Home() {
             </div>
 
             {/* Right Value Proposition */}
-            <div className="lg:col-span-6 lg:pt-3">
-              <p className="text-base sm:text-lg text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed">
+            <div className="lg:col-span-5 lg:pt-6 space-y-8">
+              <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-zinc-600 dark:text-zinc-400 font-normal leading-relaxed">
                 Powering stable distribution networks, EV fleet operators, and utility transformers.
                 From RL-driven peak shaving to cross-session driver fairness and blackout prevention.
               </p>
 
               {/* Feature Pills */}
-              <div className="mt-6 flex flex-wrap gap-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                <span className="flex items-center space-x-1.5 rounded-full bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.08] px-3 py-1">
-                  <Zap className="h-3.5 w-3.5 text-amber-500" />
+              <div className="flex flex-wrap gap-3 text-sm sm:text-base font-medium text-zinc-600 dark:text-zinc-400">
+                <span className="flex items-center space-x-2.5 rounded-full bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.08] px-4 py-2">
+                  <Zap className="h-5 w-5 text-amber-500" />
                   <span>pandapower 3.5 AC Solver</span>
                 </span>
-                <span className="flex items-center space-x-1.5 rounded-full bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.08] px-3 py-1">
-                  <Sparkles className="h-3.5 w-3.5 text-cyan-500" />
+                <span className="flex items-center space-x-2.5 rounded-full bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.08] px-4 py-2">
+                  <Sparkles className="h-5 w-5 text-cyan-500" />
                   <span>Stable-Baselines3 PPO</span>
                 </span>
-                <span className="flex items-center space-x-1.5 rounded-full bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.08] px-3 py-1">
-                  <Shield className="h-3.5 w-3.5 text-emerald-500" />
+                <span className="flex items-center space-x-2.5 rounded-full bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.08] px-4 py-2">
+                  <Shield className="h-5 w-5 text-emerald-500" />
                   <span>Jain's Fairness Ledger</span>
                 </span>
               </div>
@@ -356,6 +358,7 @@ export default function Home() {
             Educational & Research Simulation • pandapower • Gymnasium • Stable-Baselines3 • Next.js • Tailwind CSS
           </p>
         </footer>
+        </TracingBeam>
       </main>
     </div>
   );

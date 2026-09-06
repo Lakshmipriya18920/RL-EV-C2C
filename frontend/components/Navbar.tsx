@@ -27,7 +27,7 @@ export default function Navbar({
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-[#09090b]/80 backdrop-blur-xl border-b border-black/[0.05] dark:border-white/[0.06] transition-colors">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+      <div className="mx-auto flex w-full max-w-[1920px] items-center justify-between px-6 sm:px-10 lg:px-12 xl:px-16 py-4">
         {/* Brand / Logo (ElevenLabs || Brand Style) */}
         <div className="flex items-center space-x-8">
           <a href="#" className="flex items-center space-x-2 text-zinc-950 dark:text-white group">
