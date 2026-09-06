@@ -355,7 +355,7 @@ export default function Home() {
         {/* ========================================================= */}
         <footer className="border-t border-black/[0.06] dark:border-white/[0.08] pt-8 pb-12 text-center text-xs text-zinc-500 dark:text-zinc-400 space-y-2">
           <div className="flex items-center justify-center space-x-2">
-            <span className="font-semibold text-zinc-900 dark:text-white">VoltBalance RL</span>
+            <span className="font-semibold text-zinc-900 dark:text-white">COOKED</span>
             <span>—</span>
             <span>Reinforcement Learning for EV Charging Load-Balancing on Unreliable Grids</span>
           </div>

@@ -37,7 +37,7 @@ export default function Navbar({
               <span className="inline-block w-[3.5px] h-4 bg-zinc-900 dark:bg-white rounded-[1px] group-hover:scale-y-110 transition-transform" />
             </div>
             <span className="font-semibold text-lg tracking-tight text-zinc-950 dark:text-white">
-              VoltBalance
+              COOKED
             </span>
           </a>
 

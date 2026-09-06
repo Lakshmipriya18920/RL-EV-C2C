@@ -13,9 +13,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VoltBalance RL | EV Charging Load-Balancing on Unreliable Grids",
+  title: "COOKED | EV Charging Load-Balancing on Unreliable Grids",
   description:
-    "Interactive neighborhood distribution grid simulation demonstrating RL-driven transformer overload prevention and blackout mitigation.",
+    "Reinforcement Learning for EV Charging Load-Balancing on Unreliable Grids - Pandapower AC power flow simulation.",
 };
 
 export default function RootLayout({
