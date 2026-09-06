@@ -16,7 +16,8 @@ have shifted across versions.
 """
 
 import json
-from datetime import datetime
+import time
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -33,52 +34,71 @@ except ImportError as e:
 KNOWN_SITES = ["caltech", "jpl", "office_01"]
 
 
+def _fetch_chunk(client: "DataClient", site: str, start_dt: datetime, end_dt: datetime, timeseries: bool, retries: int = 3) -> list:
+    """Fetch a single date chunk with exponential-backoff retries."""
+    for attempt in range(retries):
+        try:
+            sessions = list(client.get_sessions_by_time(
+                site=site,
+                start=start_dt,
+                end=end_dt,
+                timeseries=timeseries,
+            ))
+            return sessions
+        except Exception as e:
+            wait = 2 ** attempt
+            print(f"[warn] Attempt {attempt + 1}/{retries} failed ({e.__class__.__name__}). Retrying in {wait}s...")
+            time.sleep(wait)
+    print(f"[error] All {retries} attempts failed for chunk {start_dt.date()} → {end_dt.date()}. Skipping.")
+    return []
+
+
 def fetch_sessions(
     site: str,
     start: str,
     end: str,
     api_token: str,
     timeseries: bool = False,
+    chunk_days: int = 30,
 ) -> list[dict]:
     """
-    Fetch raw charging sessions from the ACN-Data API.
+    Fetch raw charging sessions from the ACN-Data API in monthly chunks
+    to avoid mid-stream connection resets on large date ranges.
 
     Args:
         site: one of KNOWN_SITES (e.g. "caltech")
-        start: ISO date string, e.g. "2023-01-01"
-        end: ISO date string, e.g. "2023-06-01"
+        start: ISO date string, e.g. "2019-01-01"
+        end: ISO date string, e.g. "2020-01-01"
         api_token: your ACN-Data API token
         timeseries: if True, also pulls per-session power timeseries
-                    (much larger payload -- leave False unless you need it)
+        chunk_days: number of days per request (default 30 to avoid timeouts)
 
     Returns:
-        List of session dicts as returned by the ACN-Data API. Each dict
-        typically includes keys like:
-            connectionTime, disconnectTime, doneChargingTime,
-            kWhDelivered, sessionID, siteID, spaceID, stationID,
-            userID, userInputs (may contain requested energy/departure)
+        List of session dicts as returned by the ACN-Data API.
     """
     if site not in KNOWN_SITES:
-        print(f"[warn] '{site}' is not in the known site list {KNOWN_SITES}. "
-              f"Proceeding anyway in case ACN-Data has added new sites.")
+        print(f"[warn] '{site}' is not in the known site list {KNOWN_SITES}. Proceeding anyway.")
 
     client = DataClient(api_token=api_token)
 
     start_dt = datetime.fromisoformat(start)
     end_dt = datetime.fromisoformat(end)
 
-    sessions = list(
-        client.get_sessions_by_time(
-            site=site,
-            start=start_dt,
-            end=end_dt,
-            timeseries=timeseries,
-        )
-    )
+    all_sessions: list[dict] = []
+    chunk_start = start_dt
 
-    print(f"[info] Fetched {len(sessions)} sessions for site='{site}' "
-          f"between {start} and {end}")
-    return sessions
+    while chunk_start < end_dt:
+        chunk_end = min(chunk_start + timedelta(days=chunk_days), end_dt)
+        print(f"[info] Fetching {site}: {chunk_start.date()} -> {chunk_end.date()} ...")
+        chunk = _fetch_chunk(client, site, chunk_start, chunk_end, timeseries)
+        all_sessions.extend(chunk)
+        print(f"[info]   {len(chunk)} sessions (total so far: {len(all_sessions)})")
+        chunk_start = chunk_end
+        # Small polite delay between requests
+        time.sleep(0.5)
+
+    print(f"[info] Fetched {len(all_sessions)} sessions total for site='{site}' between {start} and {end}")
+    return all_sessions
 
 
 def to_dataframe(sessions: list[dict]) -> pd.DataFrame:

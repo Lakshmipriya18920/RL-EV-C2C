@@ -1,0 +1,23 @@
+{
+  "arrival": {
+    "type": "vonmises",
+    "kappa": 1.6929609928625737,
+    "loc": 2.885627030085063,
+    "n_samples": 10620
+  },
+  "dwell_time": {
+    "type": "lognorm",
+    "shape": 0.8769617625703835,
+    "loc": 0.0,
+    "scale": 4.363360143126045,
+    "n_samples": 10599
+  },
+  "energy_requested": {
+    "type": "gamma",
+    "source_column": "kwh_requested",
+    "shape": 2.146103167341881,
+    "loc": 0.0,
+    "scale": 9.093229328211994,
+    "n_samples": 9077
+  }
+}
