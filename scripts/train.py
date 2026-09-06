@@ -11,6 +11,7 @@ def train_model(
     config_path: str = "config/default.yaml",
     reward_config_path: str = "config/reward_weights.yaml",
     total_timesteps: int = 15000,
+    n_epochs: int = 10,
     output_path: str = "models/checkpoints/ppo_ev_balancer.zip",
 ):
     print(f"Loading configuration from {config_path}...")
@@ -48,12 +49,12 @@ def train_model(
         learning_rate=3e-4,
         n_steps=256,
         batch_size=64,
-        n_epochs=10,
+        n_epochs=n_epochs,
         gamma=0.99,
         verbose=1,
     )
 
-    print(f"Starting training for {total_timesteps} timesteps...")
+    print(f"Starting training for {total_timesteps} timesteps (PPO n_epochs={n_epochs})...")
     agent.train(total_timesteps=total_timesteps)
 
     print(f"Saving trained model checkpoint to {output_path}...")
@@ -63,8 +64,23 @@ def train_model(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train PPO EV Load-Balancing Policy")
-    parser.add_argument("--timesteps", type=int, default=15000, help="Total training timesteps")
+    parser.add_argument("--timesteps", type=int, default=None, help="Total training timesteps")
+    parser.add_argument("--epochs", type=int, default=None, help="Number of training rollout iterations / epochs (1 iteration = 256 timesteps = 8 episodes)")
+    parser.add_argument("--n_epochs", type=int, default=10, help="PPO surrogate loss optimization epochs per rollout update")
     parser.add_argument("--output", type=str, default="models/checkpoints/ppo_ev_balancer.zip", help="Output model path")
     args = parser.parse_args()
 
-    train_model(total_timesteps=args.timesteps, output_path=args.output)
+    n_steps = 256
+    if args.epochs is not None and args.timesteps is None:
+        total_timesteps = args.epochs * n_steps
+        print(f"Configured training for {args.epochs} epochs/iterations -> {total_timesteps} timesteps ({total_timesteps // 32} episodes).")
+    elif args.timesteps is not None:
+        total_timesteps = args.timesteps
+    else:
+        total_timesteps = 15000
+
+    train_model(
+        total_timesteps=total_timesteps,
+        n_epochs=args.n_epochs,
+        output_path=args.output,
+    )
