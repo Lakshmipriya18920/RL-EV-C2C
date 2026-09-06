@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Navbar from "@/components/Navbar";
-import ElevenSpheresShowcase from "@/components/ElevenSpheresShowcase";
+
 import SimulationControls from "@/components/SimulationControls";
 import GridCanvasVisualizer from "@/components/GridCanvasVisualizer";
 import LoadCurvesChart from "@/components/LoadCurvesChart";
@@ -214,14 +214,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ========================================================= */}
-        {/* SECTION 2: ELEVENLABS 3D SPHERES & THUNDER ARC CAROUSEL   */}
-        {/* ========================================================= */}
-        <section className="w-full rounded-[36px] bg-[#f8f8f7] dark:bg-[#111115] border border-black/[0.06] dark:border-white/[0.08] p-6 sm:p-10 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.04)]">
-          <ElevenSpheresShowcase
-            onTriggerSim={() => handleRunSimulation("compare")}
-          />
-        </section>
+
 
         {/* ========================================================= */}
         {/* SECTION 3: 5 INPUT PARAMETERS CONFIGURATION PANEL        */}
