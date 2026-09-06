@@ -46,6 +46,7 @@ class SimulationOrchestrator:
 
         env = EVChargingGridEnv(
             num_evs=ev_count,
+            max_evs=20,
             transformer_capacity_kva=trafo_cap,
             charging_power_rated_kw=charging_power,
             charging_power_reduced_kw=charging_power * 0.5,
@@ -80,7 +81,7 @@ class SimulationOrchestrator:
             ev.ev_id: {"soc": [], "state": [], "power_kw": []} for ev in env.fleet
         }
 
-        fcfs = FCFSController(num_evs=ev_count)
+        fcfs = FCFSController(num_evs=20)
         agent = self._get_agent() if mode == "rl" else None
 
         terminated = False

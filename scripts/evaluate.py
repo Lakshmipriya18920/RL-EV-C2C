@@ -24,6 +24,7 @@ def evaluate_scenario(
     # 1. Initialize Baseline Environment
     env_base = EVChargingGridEnv(
         num_evs=sc["ev_count"],
+        max_evs=20,
         transformer_capacity_kva=sc["transformer_capacity_kva"],
         charging_power_rated_kw=sc["charging_power_kw"],
         battery_capacity_kwh=sc["battery_capacity_kwh"],
@@ -36,7 +37,7 @@ def evaluate_scenario(
     )
 
     # 2. Run Baseline (Uncontrolled FCFS)
-    fcfs = FCFSController(num_evs=sc["ev_count"])
+    fcfs = FCFSController(num_evs=20)
     obs_base, _ = env_base.reset(seed=seed)
     term_base = False
     
@@ -71,6 +72,7 @@ def evaluate_scenario(
     # 3. Run RL Policy (if trained model exists, else heuristic fallback)
     env_rl = EVChargingGridEnv(
         num_evs=sc["ev_count"],
+        max_evs=20,
         transformer_capacity_kva=sc["transformer_capacity_kva"],
         charging_power_rated_kw=sc["charging_power_kw"],
         battery_capacity_kwh=sc["battery_capacity_kwh"],

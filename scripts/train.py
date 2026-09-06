@@ -28,6 +28,7 @@ def train_model(
     print("Initializing pandapower EV Charging Environment...")
     env = EVChargingGridEnv(
         num_evs=ev_cfg["default_count"],
+        max_evs=20,
         transformer_capacity_kva=grid_cfg["transformer_capacity_kva"],
         nominal_voltage_kv=grid_cfg["nominal_voltage_kv"],
         charging_power_rated_kw=ev_cfg["charger_rated_power_kw"],

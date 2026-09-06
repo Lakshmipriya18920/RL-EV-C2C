@@ -20,6 +20,7 @@ class EVChargingGridEnv(gym.Env):
     def __init__(
         self,
         num_evs: int = 10,
+        max_evs: int = 20,
         transformer_capacity_kva: float = 100.0,
         nominal_voltage_kv: float = 0.4,
         charging_power_rated_kw: float = 7.4,
@@ -37,7 +38,8 @@ class EVChargingGridEnv(gym.Env):
     ):
         super().__init__()
 
-        self.num_evs = num_evs
+        self.num_evs = min(num_evs, max_evs)
+        self.max_evs = max_evs
         self.transformer_capacity_kva = transformer_capacity_kva
         self.nominal_voltage_kv = nominal_voltage_kv
         self.charging_power_rated_kw = charging_power_rated_kw
@@ -53,11 +55,11 @@ class EVChargingGridEnv(gym.Env):
         self.critical_duration_steps = critical_duration_steps
         self.custom_base_load = custom_base_load
 
-        # Initialize Subsystems
+        # Initialize Subsystems with max_evs grid topology
         self.grid = DistributionGridNetwork(
             transformer_capacity_kva=transformer_capacity_kva,
             nominal_voltage_kv=nominal_voltage_kv,
-            num_ev_chargers=num_evs,
+            num_ev_chargers=self.max_evs,
         )
 
         self.failure_model = TransformerThermalFailureModel(
@@ -69,20 +71,11 @@ class EVChargingGridEnv(gym.Env):
         reward_kwargs = reward_weights or {}
         self.reward_engine = EVChargingRewardEngine(**reward_kwargs)
 
-        # Action Space: MultiDiscrete of size num_evs, with 3 actions each {0: Off, 1: Reduced, 2: Full}
-        self.action_space = spaces.MultiDiscrete([3] * self.num_evs)
+        # Action Space: MultiDiscrete fixed to max_evs
+        self.action_space = spaces.MultiDiscrete([3] * self.max_evs)
 
-        # Observation Space:
-        # [0] = Normalized Step (t / T)
-        # [1] = Normalized Base Load (P_base / P_trafo_cap)
-        # [2] = Previous Transformer Loading (Loading% / 100.0)
-        # [3] = Overload Stress Accumulator (stress / critical_duration)
-        # For each EV i in [0..num_evs-1]:
-        #   [4 + 4*i + 0] = Current SOC
-        #   [4 + 4*i + 1] = Remaining Needed SOC (Target - Current)
-        #   [4 + 4*i + 2] = Remaining Dwell Time fraction
-        #   [4 + 4*i + 3] = Is Connected (0.0 or 1.0)
-        obs_dim = 4 + 4 * self.num_evs
+        # Observation Space: Fixed to 4 + 4 * max_evs
+        obs_dim = 4 + 4 * self.max_evs
         self.observation_space = spaces.Box(
             low=0.0,
             high=5.0,

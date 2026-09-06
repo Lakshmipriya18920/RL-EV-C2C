@@ -62,6 +62,7 @@ def test_gymnasium_env_lifecycle():
     """Verifies reset, step, observation dimensions, and termination behavior."""
     env = EVChargingGridEnv(
         num_evs=4,
+        max_evs=4,
         transformer_capacity_kva=80.0,
         total_steps=8,
     )
