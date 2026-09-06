@@ -1,0 +1,13 @@
+name: "transformer_stressed"
+description: "Under-sized transformer (75 kVA) with heavy residential base load and 10 EVs."
+transformer_capacity_kva: 75.0
+ev_count: 10
+base_load_profile: "heavy_evening_peak"
+base_load_peak_kw: 60.0
+charging_power_kw: 7.4
+battery_capacity_kwh: 50.0
+target_soc: 0.85
+duration_hours: 8
+time_step_minutes: 15
+outage_threshold_loading: 110.0
+critical_duration_steps: 2

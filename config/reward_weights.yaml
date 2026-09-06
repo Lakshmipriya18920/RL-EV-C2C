@@ -1,0 +1,9 @@
+# Tunable reward weights for multi-objective EV charging optimization
+weights:
+  w_energy: 2.0         # Positive weight for delivering required charging energy
+  w_complete: 15.0      # One-time bonus for EV reaching required SOC before departure
+  w_overload: 5.0       # Penalty multiplier for transformer loading exceeding 100%
+  w_outage: 150.0       # Severe penalty for triggering a simulated grid outage
+  w_voltage: 10.0       # Penalty multiplier for bus voltage violations (<0.95 or >1.05 pu)
+  w_delay: 1.5          # Urgency penalty for keeping an EV paused when departure is near
+  w_action_smooth: 0.1  # Small penalty for rapid switching/hunting between charging rates

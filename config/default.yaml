@@ -1,0 +1,28 @@
+grid:
+  transformer_capacity_kva: 100.0   # Rated distribution transformer capacity (kVA)
+  nominal_voltage_kv: 0.4           # Low-voltage distribution grid nominal voltage (kV)
+  substation_voltage_kv: 11.0       # Medium-voltage feeding line (kV)
+  power_factor: 0.95                # Nominal load power factor (cos phi)
+  voltage_limits:
+    v_min_pu: 0.95
+    v_max_pu: 1.05
+
+ev:
+  default_count: 10
+  charger_rated_power_kw: 7.4       # Level 2 AC standard single-phase/three-phase charger (kW)
+  charger_reduced_power_kw: 3.7     # Reduced charging rate (kW)
+  battery_capacity_kwh: 50.0        # Average EV battery capacity (kWh)
+  target_soc_default: 0.90          # Desired departure SOC (90%)
+
+outage_model:
+  warning_threshold_loading: 85.0   # % loading for HIGH_LOAD state
+  overload_threshold_loading: 100.0 # % loading for OVERLOAD state
+  critical_threshold_loading: 115.0 # % loading for CRITICAL state
+  instantaneous_trip_loading: 150.0 # % loading for immediate breaker trip
+  critical_duration_limit_steps: 3  # consecutive timesteps in critical before trip
+  cooling_recovery_rate: 0.5        # thermal cooldown per timestep when load is safe
+
+simulation:
+  time_step_minutes: 15             # 15-minute resolution
+  episode_duration_hours: 8         # 8-hour evening/overnight window (e.g. 17:00 to 01:00)
+  total_steps: 32                   # 8 hours * 4 steps/hour = 32 steps per episode

@@ -1,0 +1,13 @@
+name: "outage_prone"
+description: "Unreliable grid scenario with tight outage trip thresholds and concentrated peak arrivals."
+transformer_capacity_kva: 80.0
+ev_count: 14
+base_load_profile: "heavy_evening_peak"
+base_load_peak_kw: 62.0
+charging_power_kw: 7.4
+battery_capacity_kwh: 50.0
+target_soc: 0.90
+duration_hours: 8
+time_step_minutes: 15
+outage_threshold_loading: 105.0
+critical_duration_steps: 2
