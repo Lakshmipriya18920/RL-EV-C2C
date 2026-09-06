@@ -3,8 +3,15 @@
 import os
 from typing import Any, Dict, Optional, Tuple, Union
 import numpy as np
-from stable_baselines3 import PPO
-from stable_baselines3.common.callbacks import BaseCallback
+try:
+    from stable_baselines3 import PPO
+    from stable_baselines3.common.callbacks import BaseCallback
+    HAS_SB3 = True
+except Exception:
+    PPO = None
+    BaseCallback = object
+    HAS_SB3 = False
+
 from ..env import EVChargingGridEnv
 
 
@@ -63,6 +70,8 @@ class PPOAgentWrapper:
 
     def load(self, path: str) -> None:
         """Loads pre-trained weights from disk."""
+        if not HAS_SB3 or PPO is None:
+            raise RuntimeError("Stable-Baselines3 / PyTorch is unavailable.")
         self.model = PPO.load(path)
 
     def predict(self, observation: np.ndarray, deterministic: bool = True) -> np.ndarray:
