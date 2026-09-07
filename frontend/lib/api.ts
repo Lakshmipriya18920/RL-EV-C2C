@@ -1,6 +1,46 @@
-import { SimulationRequest, ComparisonSimulationResponse, EpisodeSimulationResponse } from "@/types/simulation";
+import {
+  SimulationRequest,
+  ComparisonSimulationResponse,
+  EpisodeSimulationResponse,
+  VoiceCallRequest,
+  VoiceCallResponse,
+} from "@/types/simulation";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+
+export async function dispatchVoiceCall(req: VoiceCallRequest): Promise<VoiceCallResponse> {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/voice/dispatch-call`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(req),
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+    const errData = await res.json().catch(() => ({}));
+    return {
+      success: false,
+      simulated: false,
+      status: "error",
+      to_phone: req.phone_number,
+      station_id: req.station_id,
+      message: errData.detail || "Failed to dispatch voice call",
+    };
+  } catch (err) {
+    return {
+      success: true,
+      simulated: true,
+      status: "queued",
+      call_sid: `CLIENT_SIM_${Date.now()}`,
+      to_phone: req.phone_number,
+      station_id: req.station_id,
+      message: "Client simulated voice alert queued (backend offline).",
+      prompt_context: `Notifying ${req.phone_number} for ${req.station_id}: ${req.trigger_reason}`,
+    };
+  }
+}
+
 
 export async function checkBackendHealth(): Promise<boolean> {
   try {

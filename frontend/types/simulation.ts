@@ -52,3 +52,26 @@ export interface ComparisonSimulationResponse {
 }
 
 export type SimulationMode = "compare" | "baseline" | "rl";
+
+export interface VoiceCallRequest {
+  phone_number: string;
+  station_id: string;
+  trigger_reason: string;
+  current_soc?: number;
+  target_soc?: number;
+  trafo_loading?: number;
+}
+
+export interface VoiceCallResponse {
+  success: boolean;
+  simulated: boolean;
+  status: string;
+  call_sid?: string;
+  to_phone: string;
+  station_id: string;
+  agent_id?: string;
+  message: string;
+  prompt_context?: string;
+  error?: string;
+}
+

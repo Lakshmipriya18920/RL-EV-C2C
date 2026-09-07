@@ -55,3 +55,29 @@ class ComparisonSimulationResponse(BaseModel):
     timestamps: List[str]
     baseline: EpisodeSimulationResponse
     rl: EpisodeSimulationResponse
+
+
+class VoiceCallRequest(BaseModel):
+    phone_number: str = Field(..., description="Target driver telephone number e.g. +1234567890")
+    station_id: str = Field(default="Station 1", description="Identifier of EV charger stall")
+    trigger_reason: str = Field(
+        default="Grid overload peak-shaving",
+        description="Reason charging was paused or throttled",
+    )
+    current_soc: float = Field(default=0.45, ge=0.0, le=1.0, description="Current battery SoC")
+    target_soc: float = Field(default=0.85, ge=0.1, le=1.0, description="Target battery SoC")
+    trafo_loading: float = Field(default=108.5, description="Current transformer loading percent")
+
+
+class VoiceCallResponse(BaseModel):
+    success: bool
+    simulated: bool
+    status: str
+    call_sid: Optional[str] = None
+    to_phone: str
+    station_id: str
+    agent_id: Optional[str] = None
+    message: str
+    prompt_context: Optional[str] = None
+    error: Optional[str] = None
+

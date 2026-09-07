@@ -58,27 +58,9 @@ export const TracingBeam = ({
       className={cn("relative w-full", className)}
     >
       <div className="absolute -left-2 sm:-left-5 md:-left-7 lg:-left-9 top-3 z-20 pointer-events-none hidden sm:block">
-        <motion.div
-          transition={{
-            duration: 0.2,
-            delay: 0.5,
-          }}
-          className="ml-[27px] flex h-4 w-4 items-center justify-center rounded-full border border-black/15 dark:border-white/20 shadow-sm bg-white dark:bg-[#09090b]"
-        >
-          <motion.div
-            transition={{
-              duration: 0.2,
-              delay: 0.5,
-            }}
-            animate={{
-              backgroundColor:
-                scrollYProgress.get() > 0 ? "#10b981" : "#10b981",
-              borderColor:
-                scrollYProgress.get() > 0 ? "#059669" : "#059669",
-            }}
-            className="h-2 w-2 rounded-full border border-emerald-500 bg-emerald-400"
-          />
-        </motion.div>
+        <div className="ml-[27px] flex h-4 w-4 items-center justify-center rounded-full border border-black/15 dark:border-white/20 shadow-sm bg-white dark:bg-[#09090b]">
+          <div className="h-2 w-2 rounded-full border border-emerald-600 bg-emerald-500" />
+        </div>
         <svg
           viewBox={`0 0 20 ${svgHeight}`}
           width="20"
