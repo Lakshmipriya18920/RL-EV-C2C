@@ -3,6 +3,13 @@
 import React from "react";
 import { EpisodeSimulationResponse } from "@/types/simulation";
 
+// Helper: convert enum strings like "SIMULATED_OUTAGE" to "Simulated Outage"
+const formatState = (state: string): string =>
+  state
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
 interface GridVisualizerProps {
   currentStep: number;
   data: EpisodeSimulationResponse | null;
@@ -69,7 +76,7 @@ export default function GridCanvasVisualizer({
             <div className="flex items-center justify-between">
               <span className="text-[11px] text-zinc-500 uppercase tracking-wider font-bold">Transformer State</span>
               <span className={`text-xs font-bold px-2 py-0.5 rounded ${isOutage ? "bg-rose-500/20 text-rose-300" : isOverload ? "bg-amber-500/20 text-amber-300" : "bg-emerald-500/20 text-emerald-300"}`}>
-                {trafoState}
+                {formatState(trafoState)}
               </span>
             </div>
             <div className="font-extrabold text-white text-base">{trafoLoadKw.toFixed(1)} kW Load</div>
@@ -111,18 +118,35 @@ export default function GridCanvasVisualizer({
                   ? "text-emerald-300 border-emerald-500/40 bg-emerald-500/10"
                   : "text-zinc-400 border-zinc-800 bg-zinc-900/60";
 
+              const socPct = (evSoc * 100).toFixed(0);
               return (
                 <div
                   key={ev.ev_id}
-                  className={`p-3.5 rounded-lg border space-y-2 ${statusColor}`}
+                  className={`p-3 rounded-lg border ${statusColor}`}
                 >
-                  <div className="flex items-center justify-between font-bold text-sm">
-                    <span className="text-white">{ev.ev_id}</span>
-                    <span className="text-xs font-mono">{evKw > 0 ? `${evKw.toFixed(1)} kW` : evState}</span>
+                  {/* Row 1: EV ID + power/state */}
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-white font-semibold text-sm tracking-wide">{ev.ev_id}</span>
+                    <span className="text-xs font-mono opacity-80">
+                    {evKw > 0 ? `${evKw.toFixed(1)} kW` : formatState(evState)}
+                    </span>
                   </div>
-                  <div className="flex items-center justify-between text-xs text-zinc-300">
-                    <span>State of Charge</span>
-                    <span className="font-bold">{(evSoc * 100).toFixed(0)}%</span>
+                  {/* Row 2: SOC bar + percentage */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${socPct}%`,
+                          background: evState === "FULLY_CHARGED"
+                            ? "#34d399"
+                            : evState === "REDUCED"
+                            ? "#fbbf24"
+                            : "#67e8f9",
+                        }}
+                      />
+                    </div>
+                    <span className="text-xs font-mono font-bold w-8 text-right">{socPct}%</span>
                   </div>
                 </div>
               );
