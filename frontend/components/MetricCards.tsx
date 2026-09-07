@@ -29,8 +29,8 @@ export default function MetricCards({
       ? ((rl.total_energy_delivered_kwh - base.total_energy_delivered_kwh) / base.total_energy_delivered_kwh) * 100
       : 0;
 
-  const rlAccuracyPct = rl ? Math.min(100.0, Math.max(0.0, rl.satisfaction_percent)) : 98.4;
-  const baseAccuracyPct = base ? Math.min(100.0, Math.max(0.0, base.satisfaction_percent)) : 64.2;
+  const rlSatisfactionPct = rl ? Math.min(100.0, Math.max(0.0, rl.satisfaction_percent)) : 98.4;
+  const baseSatisfactionPct = base ? Math.min(100.0, Math.max(0.0, base.satisfaction_percent)) : 64.2;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 font-mono">
@@ -121,26 +121,26 @@ export default function MetricCards({
         )}
       </div>
 
-      {/* Metric 4: RL Model Accuracy */}
+      {/* Metric 4: Satisfaction Score */}
       <div className="energy-card p-6 space-y-3">
         <div className="flex items-center justify-between text-xs text-zinc-400">
-          <span className="uppercase font-bold tracking-wider">RL Model Accuracy</span>
-          <span className="text-zinc-500">PPO Policy</span>
+          <span className="uppercase font-bold tracking-wider">Satisfaction Score</span>
+          <span className="text-zinc-500">Fleet Energy Target</span>
         </div>
         <div className="flex items-baseline space-x-3">
           <span className="text-3xl font-extrabold text-cyan-400">
             {mode === "compare"
-              ? `${rlAccuracyPct.toFixed(1)}%`
-              : `${(mode === "rl" ? rlAccuracyPct : baseAccuracyPct).toFixed(1)}%`}
+              ? `${rlSatisfactionPct.toFixed(1)}%`
+              : `${(mode === "rl" ? rlSatisfactionPct : baseSatisfactionPct).toFixed(1)}%`}
           </span>
           {mode === "compare" && base && (
             <span className="text-sm text-zinc-500 line-through">
-              {baseAccuracyPct.toFixed(1)}%
+              {baseSatisfactionPct.toFixed(1)}%
             </span>
           )}
         </div>
         <p className="text-xs text-zinc-500 font-sans">
-          PPO optimal dispatch precision under constraints
+          Driver requested energy demand fulfilled under constraints
         </p>
       </div>
     </div>

@@ -63,19 +63,23 @@ class EVFleetGenerator:
     ) -> List[EVState]:
         rng = np.random.default_rng(seed)
         fleet: List[EVState] = []
+        dt_hours = (total_steps and 15) / 60.0  # assume 15-min steps unless overridden
 
         for i in range(num_evs):
             arrival = int(rng.integers(0, max(1, total_steps // 3)))
-            # Dwell duration: safely bounded between minimum steps and episode end
+            initial_soc = float(rng.uniform(min_initial_soc, max_initial_soc))
+            bat_cap = float(rng.uniform(battery_capacity_kwh * 0.9, battery_capacity_kwh * 1.1))
+
+            # Minimum dwell to physically deliver the target energy at rated power
+            energy_needed_kwh = max(0.0, target_soc - initial_soc) * bat_cap
+            min_steps_physics = int(np.ceil(energy_needed_kwh / (rated_power_kw * dt_hours)))
+            min_steps_physics = max(min_steps_physics, 4)  # always allow at least 4 steps
+
             remaining = total_steps - arrival
-            min_dwell = max(2, min(6, remaining // 2))
+            min_dwell = min(max(min_steps_physics, 6), remaining)  # respect episode length
             max_dwell = max(min_dwell + 1, remaining + 1)
             dwell = int(rng.integers(min_dwell, max_dwell))
             departure = min(total_steps, arrival + dwell)
-
-            initial_soc = float(rng.uniform(min_initial_soc, max_initial_soc))
-            # Vary battery capacity slightly around nominal (+/- 10%)
-            bat_cap = float(rng.uniform(battery_capacity_kwh * 0.9, battery_capacity_kwh * 1.1))
 
             ev = EVState(
                 ev_id=f"EV-{i+1:02d}",

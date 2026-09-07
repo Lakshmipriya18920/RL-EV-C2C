@@ -83,7 +83,7 @@ export default function HomePage() {
           </div>
           <div className="flex flex-col border-l border-white/10 pl-4">
             <span className="text-2xl md:text-3xl font-bold font-mono text-white">98.4%</span>
-            <span className="text-xs text-zinc-400 mt-1 uppercase tracking-wider font-mono">RL Model Accuracy</span>
+            <span className="text-xs text-zinc-400 mt-1 uppercase tracking-wider font-mono">Satisfaction Score</span>
           </div>
           <div className="flex flex-col border-l border-white/10 pl-4">
             <span className="text-2xl md:text-3xl font-bold font-mono text-white">30,000+</span>

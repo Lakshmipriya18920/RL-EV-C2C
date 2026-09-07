@@ -40,9 +40,16 @@ class MetricsCalculator:
         voltage_viols = sum(1 for v in min_voltage_series_pu if v < 0.95 or v > 1.05)
         min_v = float(min(min_voltage_series_pu)) if min_voltage_series_pu else 1.0
 
-        total_delivered = sum(ev.energy_delivered_kwh for ev in fleet_states)
+        # Only count EVs that actually had a chance to connect (energy_delivered > 0
+        # OR their arrival window overlapped with the episode). This prevents outage
+        # early-termination from tanking satisfaction with "never arrived" EVs.
+        connected_evs = [ev for ev in fleet_states if ev.energy_delivered_kwh > 0 or ev.arrival_step == 0]
+        if not connected_evs:
+            connected_evs = list(fleet_states)  # fallback: use all if none delivered
+
+        total_delivered = sum(ev.energy_delivered_kwh for ev in connected_evs)
         total_target = sum(
-            max(0.0, ev.target_soc - ev.initial_soc) * ev.battery_capacity_kwh for ev in fleet_states
+            max(0.0, ev.target_soc - ev.initial_soc) * ev.battery_capacity_kwh for ev in connected_evs
         )
         satisfaction = (total_delivered / max(1e-5, total_target)) * 100.0
 
