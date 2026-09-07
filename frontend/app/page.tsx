@@ -23,19 +23,6 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="relative pt-20 pb-24 md:pt-32 md:pb-36 px-6 overflow-hidden z-10">
         <div className="relative max-w-5xl mx-auto text-center">
-          {/* Engineering Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center space-x-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-xs text-zinc-300 backdrop-blur-md mb-8"
-          >
-            <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
-            <span className="font-mono text-zinc-400">PPO REINFORCEMENT LEARNING</span>
-            <span className="text-zinc-600">•</span>
-            <span className="font-mono text-zinc-300">PANDAPOWER AC FLOW</span>
-          </motion.div>
-
           {/* Letter-by-letter Animated Heading */}
           <AnimatedHeading
             text="Bringing intelligence to the grid"

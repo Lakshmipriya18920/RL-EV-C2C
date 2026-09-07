@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
-import { checkBackendHealth } from "@/lib/api";
 
 const NAV_ITEMS = [
   { label: "Home", href: "/" },
@@ -19,16 +18,7 @@ const NAV_ITEMS = [
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [backendOnline, setBackendOnline] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
-
-  useEffect(() => {
-    checkBackendHealth().then(setBackendOnline);
-    const interval = setInterval(() => {
-      checkBackendHealth().then(setBackendOnline);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full bg-[#09090b]/85 backdrop-blur-xl border-b border-white/[0.06] transition-colors">
@@ -68,20 +58,6 @@ export default function Navbar() {
 
         {/* Right Side Actions */}
         <div className="flex items-center space-x-4">
-          {/* Status Indicator */}
-          <div className="hidden sm:flex items-center space-x-2 rounded-full bg-white/[0.04] border border-white/[0.08] px-3 py-1 text-xs text-zinc-400">
-            <span
-              className={`h-2 w-2 rounded-full ${
-                backendOnline
-                  ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)] animate-pulse"
-                  : "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]"
-              }`}
-            />
-            <span className="text-[11px] font-mono">
-              {backendOnline ? "FastAPI 8000" : "Engine Active"}
-            </span>
-          </div>
-
           {/* GitHub Link */}
           <a
             href="https://github.com/varungit222/Transformer-RL-C2C"

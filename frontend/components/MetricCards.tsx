@@ -29,8 +29,8 @@ export default function MetricCards({
       ? ((rl.total_energy_delivered_kwh - base.total_energy_delivered_kwh) / base.total_energy_delivered_kwh) * 100
       : 0;
 
-  const rlAccuracyPct = rl ? Math.min(99.6, Math.max(92.0, rl.satisfaction_percent)) : 98.4;
-  const baseAccuracyPct = base ? Math.min(78.0, base.satisfaction_percent * 0.8) : 64.2;
+  const rlAccuracyPct = rl ? Math.min(100.0, Math.max(0.0, rl.satisfaction_percent)) : 98.4;
+  const baseAccuracyPct = base ? Math.min(100.0, Math.max(0.0, base.satisfaction_percent)) : 64.2;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 font-mono">
