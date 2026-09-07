@@ -1,7 +1,7 @@
 """Evaluation Metrics Computation for Baseline vs RL Simulation Runs."""
 
 from dataclasses import dataclass, asdict
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 import numpy as np
 
 
