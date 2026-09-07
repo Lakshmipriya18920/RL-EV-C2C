@@ -1,18 +1,9 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from dashboard.components import ChargingRequest
 
 app = FastAPI(
-    title="EV Charging RL API",
-    description="Backend API for RL-based EV charging load balancing"
-)
-
-# Allow the Next.js frontend to communicate with the backend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    title="EV Charging RL Backend",
+    description="Backend API for EV charging load balancing"
 )
 
 
@@ -28,4 +19,34 @@ def health_check():
     return {
         "status": "healthy",
         "service": "EV Charging RL Backend"
+    }
+
+
+@app.post("/api/charging/optimize")
+def optimize_charging(data: ChargingRequest):
+
+    available_capacity = (
+        data.transformer_capacity - data.current_load
+    )
+
+    results = []
+
+    for ev in data.evs:
+
+        recommended_rate = min(
+            ev.max_charging_rate,
+            available_capacity / max(len(data.evs), 1)
+        )
+
+        results.append({
+            "ev_id": ev.ev_id,
+            "battery_level": ev.battery_level,
+            "recommended_charging_rate": round(
+                max(recommended_rate, 0), 2
+            )
+        })
+
+    return {
+        "available_transformer_capacity": available_capacity,
+        "charging_recommendations": results
     }

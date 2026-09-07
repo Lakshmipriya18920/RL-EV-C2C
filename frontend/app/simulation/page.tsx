@@ -47,6 +47,7 @@ export default function SimulationPage() {
   const [comparisonData, setComparisonData] = useState<ComparisonSimulationResponse | null>(null);
   const [singleData, setSingleData] = useState<EpisodeSimulationResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [chargingResult, setChargingResult] = useState<any>(null);
 
   // Timestep scrubber state
   const [currentStep, setCurrentStep] = useState<number>(0);
@@ -70,22 +71,108 @@ export default function SimulationPage() {
       setIsLoading(true);
       setActiveMode(mode);
 
-      if (mode === "compare") {
-        const res = await fetchComparisonSimulation(config);
-        setComparisonData(res);
-        setSingleData(null);
-      } else {
-        const res = await fetchSingleSimulation(config, mode);
-        setSingleData(res);
-        setComparisonData(null);
-      }
+      try {
+        // ========================================
+        // RUN MAIN SIMULATION FIRST
+        // ========================================
 
-      setCurrentStep(0);
-      setIsPlaying(true); // Automatically start stepping through timesteps on Run Simulation click
-      setIsLoading(false);
-    },
-    [config, activeMode]
-  );
+        if (mode === "compare") {
+          const res = await fetchComparisonSimulation(config);
+
+          console.log("Comparison Simulation:", res);
+
+          setComparisonData(res);
+          setSingleData(null);
+
+        } else {
+          const res = await fetchSingleSimulation(config, mode);
+
+          console.log("Single Simulation:", res);
+
+          setSingleData(res);
+          setComparisonData(null);
+        }
+
+
+        // ========================================
+        // OPTIONAL EV OPTIMIZATION BACKEND
+        // ========================================
+
+        try {
+          const response = await fetch(
+            "http://127.0.0.1:8000/api/charging/optimize",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type": "application/json",
+              },
+
+              body: JSON.stringify({
+                transformer_capacity:
+                  config.transformer_capacity_kw || 100,
+
+                current_load:
+                  config.base_load_kw || 60,
+
+                evs: [
+                  {
+                    ev_id: "EV-01",
+                    battery_level: 30,
+                    target_level: 80,
+                    max_charging_rate: 7.4,
+                  },
+
+                  {
+                    ev_id: "EV-02",
+                    battery_level: 50,
+                    target_level: 90,
+                    max_charging_rate: 7.4,
+                  },
+                ],
+              }),
+            }
+          );
+
+          if (response.ok) {
+            const result = await response.json();
+
+            console.log(
+              "Charging Backend Result:",
+              result
+            );
+
+            setChargingResult(result);
+
+          } else {
+            console.warn(
+              "Charging optimization endpoint unavailable"
+            );
+          }
+
+        } catch (optimizationError) {
+
+          console.warn(
+            "Charging optimization skipped:",
+            optimizationError
+          );
+        }
+
+
+        // ========================================
+        // START PLAYBACK
+        // ========================================
+
+        setCurrentStep(0);
+
+        setIsPlaying(true);
+
+      } catch (error) {
+        console.error("Simulation Error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }, [config, activeMode]);
 
   useEffect(() => {
     handleRunSimulation("compare");
@@ -127,53 +214,110 @@ export default function SimulationPage() {
       <Navbar />
       <main className="mx-auto w-full max-w-7xl px-4 sm:px-6 py-8 space-y-8 flex-1">
         {/* Header Title */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/[0.08] pb-6">
-        <div>
-          <AnimatedHeading
-            text="AC Simulation Engine & Control"
-            className="text-2xl sm:text-3xl font-bold tracking-tight text-white font-mono"
-          />
-          <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-            Real-time pandapower evaluation comparing Uncontrolled FCFS vs RL Smart Balancer.
-          </p>
-        </div>
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/[0.08] pb-6">
+          <div>
+            <AnimatedHeading
+              text="AC Simulation Engine & Control"
+              className="text-2xl sm:text-3xl font-bold tracking-tight text-white font-mono"
+            />
+            <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+              Real-time pandapower evaluation comparing Uncontrolled FCFS vs RL Smart Balancer.
+            </p>
+          </div>
 
-        {/* Inline Timestep Controller */}
-        <div className="energy-card px-4 py-2 flex items-center space-x-3 text-xs font-mono">
-          <button
-            onClick={() => setCurrentStep(0)}
-            className="p-1 text-zinc-400 hover:text-white transition-colors"
-            title="Reset"
-          >
-            <RotateCcw className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => setCurrentStep((prev) => Math.max(0, prev - 1))}
-            className="p-1 text-zinc-400 hover:text-white transition-colors"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => setIsPlaying(!isPlaying)}
-            className="h-7 w-7 rounded-md bg-cyan-500 hover:bg-cyan-400 text-zinc-950 flex items-center justify-center font-bold transition-all"
-          >
-            {isPlaying ? <Pause className="h-3.5 w-3.5 fill-current" /> : <Play className="h-3.5 w-3.5 fill-current ml-0.5" />}
-          </button>
-          <button
-            onClick={() => setCurrentStep((prev) => Math.min(totalSteps - 1, prev + 1))}
-            className="p-1 text-zinc-400 hover:text-white transition-colors"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-          <div className="border-l border-white/10 pl-3 flex items-center space-x-2">
-            <span className="text-cyan-400 font-bold">{timestamps[currentStep] || "17:00"}</span>
-            <span className="text-zinc-500">
-              ({currentStep + 1}/{totalSteps})
-            </span>
+          {/* Inline Timestep Controller */}
+          <div className="energy-card px-4 py-2 flex items-center space-x-3 text-xs font-mono">
+            <button
+              onClick={() => setCurrentStep(0)}
+              className="p-1 text-zinc-400 hover:text-white transition-colors"
+              title="Reset"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setCurrentStep((prev) => Math.max(0, prev - 1))}
+              className="p-1 text-zinc-400 hover:text-white transition-colors"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setIsPlaying(!isPlaying)}
+              className="h-7 w-7 rounded-md bg-cyan-500 hover:bg-cyan-400 text-zinc-950 flex items-center justify-center font-bold transition-all"
+            >
+              {isPlaying ? <Pause className="h-3.5 w-3.5 fill-current" /> : <Play className="h-3.5 w-3.5 fill-current ml-0.5" />}
+            </button>
+            <button
+              onClick={() => setCurrentStep((prev) => Math.min(totalSteps - 1, prev + 1))}
+              className="p-1 text-zinc-400 hover:text-white transition-colors"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+            <div className="border-l border-white/10 pl-3 flex items-center space-x-2">
+              <span className="text-cyan-400 font-bold">{timestamps[currentStep] || "17:00"}</span>
+              <span className="text-zinc-500">
+                ({currentStep + 1}/{totalSteps})
+              </span>
+            </div>
           </div>
         </div>
-      </div>
 
+        {/* Simulation Controls Panel */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <SimulationControls
+            config={config}
+            onChangeConfig={setConfig}
+            onRunSimulation={handleRunSimulation}
+            isLoading={isLoading}
+            activeMode={activeMode}
+          />
+        </motion.div>
+
+        {/* Live Telemetry Metric Cards */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="space-y-3"
+        >
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 font-mono">
+            Simulation Output Telemetry
+          </h2>
+          <MetricCards
+            baselineMetrics={
+              comparisonData?.baseline.metrics ||
+              (activeMode === "baseline" ? singleData?.metrics : null) ||
+              null
+            }
+            rlMetrics={
+              comparisonData?.rl.metrics ||
+              (activeMode === "rl" ? singleData?.metrics : null) ||
+              null
+            }
+            mode={activeMode}
+          />
+        </motion.section>
+
+        {/* Live Grid Canvas Visualizer */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="space-y-3"
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 font-mono">
+              Feeder & Transformer Topology
+            </h2>
+            <span className="text-xs font-mono text-cyan-400">
+              Timestep {currentStep + 1}: {timestamps[currentStep] || "17:00"}
+            </span>
+          </div>
+
+<<<<<<< Updated upstream
       {/* Simulation Controls & Voice Dispatcher */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -197,168 +341,128 @@ export default function SimulationPage() {
           trafoLoading={comparisonData?.baseline.metrics.max_loading_percent ?? 108.5}
         />
       </motion.div>
+=======
+          {activeMode === "compare" && comparisonData ? (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <GridCanvasVisualizer
+                currentStep={currentStep}
+                data={comparisonData.baseline}
+                modeLabel="Uncontrolled Baseline (FCFS Peak)"
+                isRL={false}
+              />
+              <GridCanvasVisualizer
+                currentStep={currentStep}
+                data={comparisonData.rl}
+                modeLabel="RL Smart Balancer (Shaved Peak)"
+                isRL={true}
+              />
+            </div>
+          ) : (
+            <GridCanvasVisualizer
+              currentStep={currentStep}
+              data={singleData || comparisonData?.rl || null}
+              modeLabel={activeMode === "baseline" ? "Uncontrolled Baseline" : "RL Load Balancer"}
+              isRL={activeMode === "rl"}
+            />
+          )}
+        </motion.section>
+>>>>>>> Stashed changes
 
-      {/* Live Telemetry Metric Cards */}
-      <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="space-y-3"
-      >
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 font-mono">
-          Simulation Output Telemetry
-        </h2>
-        <MetricCards
-          baselineMetrics={
-            comparisonData?.baseline.metrics ||
-            (activeMode === "baseline" ? singleData?.metrics : null) ||
-            null
-          }
-          rlMetrics={
-            comparisonData?.rl.metrics ||
-            (activeMode === "rl" ? singleData?.metrics : null) ||
-            null
-          }
-          mode={activeMode}
-        />
-      </motion.section>
-
-      {/* Live Grid Canvas Visualizer */}
-      <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        className="space-y-3"
-      >
-        <div className="flex items-center justify-between">
+        {/* Real Interactive Recharts Graphs */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="space-y-6"
+        >
           <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 font-mono">
-            Feeder & Transformer Topology
+            Real-Time Demand Curves & Load Analytics
           </h2>
-          <span className="text-xs font-mono text-cyan-400">
-            Timestep {currentStep + 1}: {timestamps[currentStep] || "17:00"}
-          </span>
-        </div>
 
-        {activeMode === "compare" && comparisonData ? (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <GridCanvasVisualizer
-              currentStep={currentStep}
-              data={comparisonData.baseline}
-              modeLabel="Uncontrolled Baseline (FCFS Peak)"
-              isRL={false}
-            />
-            <GridCanvasVisualizer
-              currentStep={currentStep}
-              data={comparisonData.rl}
-              modeLabel="RL Smart Balancer (Shaved Peak)"
-              isRL={true}
-            />
-          </div>
-        ) : (
-          <GridCanvasVisualizer
+          {/* 1. Large Transformer Load Over Time */}
+          <LoadCurvesChart
+            comparisonData={comparisonData}
+            singleData={singleData}
+            mode={activeMode}
+            trafoCapacityKw={config.transformer_capacity_kw}
             currentStep={currentStep}
-            data={singleData || comparisonData?.rl || null}
-            modeLabel={activeMode === "baseline" ? "Uncontrolled Baseline" : "RL Load Balancer"}
-            isRL={activeMode === "rl"}
           />
-        )}
-      </motion.section>
 
-      {/* Real Interactive Recharts Graphs */}
-      <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.4 }}
-        className="space-y-6"
-      >
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 font-mono">
-          Real-Time Demand Curves & Load Analytics
-        </h2>
+          {/* 2 & 3. Side by Side EV Charging Activity & Grid Load Decomposition */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* EV Charging Activity Over Time */}
+            <div className="energy-card p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-300 font-mono">
+                  EV Charging Activity Over Time (kW)
+                </h3>
+                <span className="text-[11px] font-mono text-zinc-500">Per-Vehicle Power</span>
+              </div>
 
-        {/* 1. Large Transformer Load Over Time */}
-        <LoadCurvesChart
-          comparisonData={comparisonData}
-          singleData={singleData}
-          mode={activeMode}
-          trafoCapacityKw={config.transformer_capacity_kw}
-          currentStep={currentStep}
-        />
-
-        {/* 2 & 3. Side by Side EV Charging Activity & Grid Load Decomposition */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* EV Charging Activity Over Time */}
-          <div className="energy-card p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-300 font-mono">
-                EV Charging Activity Over Time (kW)
-              </h3>
-              <span className="text-[11px] font-mono text-zinc-500">Per-Vehicle Power</span>
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={evActivityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <XAxis dataKey="timestamp" stroke="#52525b" fontSize={10} tickLine={false} />
+                    <YAxis stroke="#52525b" fontSize={10} tickLine={false} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#090a0f",
+                        borderColor: "rgba(255,255,255,0.1)",
+                        borderRadius: "0.5rem",
+                        fontSize: "11px",
+                      }}
+                    />
+                    {comparisonData?.rl.ev_states.slice(0, 6).map((ev, i) => {
+                      const colors = ["#06b6d4", "#10b981", "#3b82f6", "#8b5cf6", "#f59e0b", "#ec4899"];
+                      return (
+                        <Area
+                          key={ev.ev_id}
+                          type="monotone"
+                          dataKey={ev.ev_id}
+                          stackId="1"
+                          stroke={colors[i % colors.length]}
+                          fill={colors[i % colors.length]}
+                          fillOpacity={0.4}
+                        />
+                      );
+                    })}
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
 
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={evActivityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <XAxis dataKey="timestamp" stroke="#52525b" fontSize={10} tickLine={false} />
-                  <YAxis stroke="#52525b" fontSize={10} tickLine={false} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#090a0f",
-                      borderColor: "rgba(255,255,255,0.1)",
-                      borderRadius: "0.5rem",
-                      fontSize: "11px",
-                    }}
-                  />
-                  {comparisonData?.rl.ev_states.slice(0, 6).map((ev, i) => {
-                    const colors = ["#06b6d4", "#10b981", "#3b82f6", "#8b5cf6", "#f59e0b", "#ec4899"];
-                    return (
-                      <Area
-                        key={ev.ev_id}
-                        type="monotone"
-                        dataKey={ev.ev_id}
-                        stackId="1"
-                        stroke={colors[i % colors.length]}
-                        fill={colors[i % colors.length]}
-                        fillOpacity={0.4}
-                      />
-                    );
-                  })}
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+            {/* Base Load vs EV Load vs Total Grid Load */}
+            <div className="energy-card p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-300 font-mono">
+                  Base Load vs EV Load Decomposition
+                </h3>
+                <span className="text-[11px] font-mono text-zinc-500">Grid Load Breakdown</span>
+              </div>
 
-          {/* Base Load vs EV Load vs Total Grid Load */}
-          <div className="energy-card p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-300 font-mono">
-                Base Load vs EV Load Decomposition
-              </h3>
-              <span className="text-[11px] font-mono text-zinc-500">Grid Load Breakdown</span>
-            </div>
-
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={gridDecompositionData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <XAxis dataKey="timestamp" stroke="#52525b" fontSize={10} tickLine={false} />
-                  <YAxis stroke="#52525b" fontSize={10} tickLine={false} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#090a0f",
-                      borderColor: "rgba(255,255,255,0.1)",
-                      borderRadius: "0.5rem",
-                      fontSize: "11px",
-                    }}
-                  />
-                  <ReferenceLine y={config.transformer_capacity_kw} stroke="#ef4444" strokeDasharray="3 3" />
-                  <Area type="monotone" dataKey="base_load_kw" name="Base Residential Load" stackId="1" stroke="#71717a" fill="#3f3f46" fillOpacity={0.6} />
-                  <Area type="monotone" dataKey="ev_load_kw" name="EV Charging Demand" stackId="1" stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.5} />
-                </AreaChart>
-              </ResponsiveContainer>
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={gridDecompositionData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <XAxis dataKey="timestamp" stroke="#52525b" fontSize={10} tickLine={false} />
+                    <YAxis stroke="#52525b" fontSize={10} tickLine={false} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#090a0f",
+                        borderColor: "rgba(255,255,255,0.1)",
+                        borderRadius: "0.5rem",
+                        fontSize: "11px",
+                      }}
+                    />
+                    <ReferenceLine y={config.transformer_capacity_kw} stroke="#ef4444" strokeDasharray="3 3" />
+                    <Area type="monotone" dataKey="base_load_kw" name="Base Residential Load" stackId="1" stroke="#71717a" fill="#3f3f46" fillOpacity={0.6} />
+                    <Area type="monotone" dataKey="ev_load_kw" name="EV Charging Demand" stackId="1" stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.5} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
-        </div>
-      </motion.section>
-    </main>
-  </div>
-);
+        </motion.section>
+      </main>
+    </div>
+  );
 }
