@@ -50,13 +50,19 @@ function VoiceAlertInner({
   const handleStartCall = useCallback(async () => {
     setErrorMessage(null);
     try {
-      // Request mic permission
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Request mic permission with echo cancellation to prevent speaker feedback loop
+      await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
 
       // Fetch signed URL from backend (or fallback to public agent ID)
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
       let signedUrl: string | undefined;
-      let agentId = "7401m1ya3xa5eghsnj7nav4x4kxr";
+      let agentId = "agent_7401m1ya3xa5eghsnj7nav4x4kxr";
 
       try {
         const res = await fetch(`${backendUrl}/api/voice/signed-url`);
