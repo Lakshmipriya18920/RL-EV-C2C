@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from "react";
 import { PhoneCall, PhoneOff, Mic, MicOff, Volume2, Sparkles, AlertTriangle, ShieldCheck, Radio } from "lucide-react";
-import { useConversation } from "@elevenlabs/react";
+import { useConversation, ConversationProvider } from "@elevenlabs/react";
 
 interface VoiceAlertCardProps {
   currentStationId?: string;
@@ -11,7 +11,7 @@ interface VoiceAlertCardProps {
   trafoLoading?: number;
 }
 
-export default function VoiceAlertCard({
+function VoiceAlertInner({
   currentStationId = "Station 1",
   isOverloaded = false,
   isPaused = false,
@@ -271,3 +271,12 @@ export default function VoiceAlertCard({
     </div>
   );
 }
+
+export default function VoiceAlertCard(props: VoiceAlertCardProps) {
+  return (
+    <ConversationProvider>
+      <VoiceAlertInner {...props} />
+    </ConversationProvider>
+  );
+}
+
