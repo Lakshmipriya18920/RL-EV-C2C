@@ -91,6 +91,33 @@ def simulate_compare(req: SimulationRequest) -> Dict[str, Any]:
 voice_dispatcher = VoiceAgentDispatcher()
 
 
+@app.post("/api/charging/optimize")
+def optimize_charging(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Single-step EV load balancing recommendation endpoint."""
+    trafo_cap = float(data.get("transformer_capacity", 100.0))
+    curr_load = float(data.get("current_load", 0.0))
+    evs = data.get("evs", [])
+
+    available_capacity = max(0.0, trafo_cap - curr_load)
+    ev_count = max(len(evs), 1)
+    equal_share = available_capacity / ev_count
+
+    results = []
+    for ev in evs:
+        max_rate = float(ev.get("max_charging_rate", 7.4))
+        rec_rate = min(max_rate, equal_share)
+        results.append({
+            "ev_id": ev.get("ev_id", "EV-1"),
+            "battery_level": float(ev.get("battery_level", 0.5)),
+            "recommended_charging_rate": round(max(rec_rate, 0.0), 2),
+        })
+
+    return {
+        "available_transformer_capacity": available_capacity,
+        "charging_recommendations": results,
+    }
+
+
 @app.get("/api/voice/signed-url")
 def get_voice_signed_url() -> Dict[str, Any]:
     """Generates a signed WebRTC/WebSocket URL for in-browser live conversation with ElevenLabs Agent."""
@@ -109,4 +136,5 @@ def dispatch_voice_call(req: VoiceCallRequest) -> Dict[str, Any]:
         trafo_loading=req.trafo_loading,
     )
     return result
+
 

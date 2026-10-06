@@ -226,7 +226,7 @@ export default function ExplainabilityPage() {
                     <span className="text-cyan-400 font-bold">{item.currentAction}</span>
                   </div>
                   <div className="bg-zinc-900/40 p-3 rounded-lg border border-white/5">
-                    <span className="text-zinc-500 text-[10px] block uppercase">RL MODEL ACCURACY</span>
+                    <span className="text-zinc-500 text-[10px] block uppercase">SATISFACTION SCORE</span>
                     <span className="text-emerald-400 font-bold">98.4% Optimal Dispatch</span>
                   </div>
                 </div>
